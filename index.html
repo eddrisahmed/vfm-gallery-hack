@@ -2,109 +2,139 @@
 <html>
 <head>
     <title>VF.M.GALLERY.HACK</title>
-    <style>
-        :root {
-            --hacker-green: #0f0;
-            --hacker-blue: #0af;
-            --hacker-red: #f00;
-            --hacker-yellow: #ff0;
-            --bg-dark: #111;
-            --bg-darker: #000;
-            --border-color: #333;
-        }
-        
-        body {
-            background-color: var(--bg-darker);
-            color: var(--hacker-green);
-            font-family: 'Courier New', monospace;
-            margin: 0;
-            padding: 20px;
-            height: 100vh;
-            overflow: hidden;
-        }
-        
-        #terminal {
-            height: calc(100% - 40px);
-            overflow-y: auto;
-            padding-right: 15px;
-        }
-        
-        .prompt { color: var(--hacker-green); }
-        .system { color: var(--hacker-blue); }
-        .success { color: var(--hacker-green); }
-        .error { color: var(--hacker-red); }
-        .file { color: var(--hacker-yellow); }
-        .warning { color: var(--hacker-yellow); }
-        .input-line { color: var(--hacker-green); }
-        
-        .blink {
-            animation: blink 1s infinite;
-        }
-        
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
-        
-        .progress-container {
-            margin: 10px 0;
-        }
-        
-        .progress-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-        
-        .progress-bar {
-            height: 3px;
-            background: var(--border-color);
-            width: 100%;
-        }
-        
-        .progress {
-            height: 100%;
-            background: var(--hacker-green);
-            width: 0%;
-            transition: width 0.3s;
-        }
-        
-        /* Scrollbar styling */
-        #terminal::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        #terminal::-webkit-scrollbar-track {
-            background: var(--bg-dark);
-        }
-        
-        #terminal::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 4px;
-        }
-        
-        /* Input line styling */
-        .input-line {
-            display: flex;
-            align-items: center;
-        }
-        
-        .input-line span {
-            margin-right: 10px;
-        }
-        
-        .input-line input {
-            background: transparent;
-            border: none;
-            color: var(--hacker-green);
-            font-family: 'Courier New', monospace;
-            flex-grow: 1;
-            outline: none;
-            caret-color: var(--hacker-green);
-        }
-    </style>
+
+<style>
+    :root {
+        --hacker-green: #00ff00;
+        --hacker-blue: #00d0ff;
+        --hacker-red: #ff0033;
+        --hacker-yellow: #ffff00;
+        --bg-dark: #111111;
+        --bg-darker: #000000;
+        --border-color: #333333;
+        --glow: 0 0 5px;
+    }
+
+    body {
+        background-color: var(--bg-darker);
+        color: var(--hacker-green);
+        font-family: 'Courier New', monospace;
+        margin: 0;
+        padding: 0;
+        height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header {
+        background-color: var(--bg-dark);
+        color: var(--hacker-green);
+        padding: 10px 20px;
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 0 5px #0f0;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-align: center;
+    }
+
+    #terminal {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        box-shadow: inset 0 0 10px var(--hacker-green);
+    }
+
+    .prompt, .success, .input-line, .system, .file, .warning {
+        text-shadow: var(--glow) var(--hacker-green);
+    }
+
+    .system { color: var(--hacker-blue); }
+    .success { color: var(--hacker-green); }
+    .error { color: var(--hacker-red); text-shadow: var(--glow) var(--hacker-red); }
+    .file, .warning { color: var(--hacker-yellow); text-shadow: var(--glow) var(--hacker-yellow); }
+
+    .blink {
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        50% { opacity: 0; }
+    }
+
+    .progress-container {
+        margin: 10px 0;
+    }
+
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        font-size: 12px;
+        color: var(--hacker-yellow);
+    }
+
+    .progress-bar {
+        height: 5px;
+        background: var(--border-color);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .progress {
+        height: 70%;
+        background: linear-gradient(to right, var(--hacker-green), #33ff33);
+        width: 0%;
+        transition: width 0.4s ease;
+    }
+
+    #terminal::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #terminal::-webkit-scrollbar-track {
+        background: var(--bg-dark);
+    }
+
+    #terminal::-webkit-scrollbar-thumb {
+        background: var(--hacker-green);
+        border-radius: 4px;
+        box-shadow: inset 0 0 5px var(--hacker-green);
+    }
+
+    .input-line {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    .input-line span {
+        margin-right: 10px;
+    }
+
+    .input-line input {
+        background: transparent;
+        border: none;
+        color: var(--hacker-green);
+        font-family: 'Courier New', monospace;
+        flex-grow: 1;
+        outline: none;
+        caret-color: var(--hacker-green);
+        font-size: 16px;
+        transition: border 0.3s;
+    }
+
+    .input-line input:focus {
+        border-bottom: 1px dashed var(--hacker-green);
+    }
+</style>
 </head>
 <body>
-    <div id="terminal"></div>
+  <div class="header"> VoidFishMane 🥷 </div>
+<div id="terminal">
+    <!-- Terminal output here -->
+</div>
+
 
     <!-- Hidden audio elements for sound effects -->
     <audio id="typing-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-keyboard-typing-1386.mp3" preload="auto"></audio>
@@ -227,11 +257,11 @@
         async function showWelcome() {
             playSound(hackingSound, 0.2);
             
-            await typePrint("Initializing VF.M.GALLERY.HACK protocol...", "system", 10);
+            await typePrint("Initializing vfm.gallery.hack protocol...", "system", 10);
             await typePrint("Bypassing security layers...", "system", 10);
             await typePrint("Establishing encrypted connection...", "system", 10);
             print("", "system");
-            await typePrint("Welcome to VF.M Terminal Interface", "success", 10);
+            await typePrint("Welcome to VFM Terminal", "success", 10);
             playSound(successSound);
             await typePrint(`Type '${CONFIG.COMMAND}' to begin`, "prompt", 10);
             print("", "system");
